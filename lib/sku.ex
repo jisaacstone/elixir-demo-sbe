@@ -1,6 +1,6 @@
 defmodule Sku do
   use GenServer
-
+  
   ## CLIENT API ##
 
   def start_link(opts \\ []) do
@@ -21,12 +21,17 @@ defmodule Sku do
   ## SERVER API ##
 
   def init() do
-    {:ok, %{}}
+    {:ok, initial_state}
   end
 
   def handle_call({:update, lid, qty}, _from, locations) do
     {action, newlocations} = update(lid, qty, locations)
     {:reply, action, newlocations}
+  end
+
+  defp initial_state do
+    # Stub
+    %{"a_location_id" => 5}
   end
 
   @doc """
@@ -46,13 +51,13 @@ defmodule Sku do
     newlocations = Map.delete(locations, lid)
     {{:change, Map.keys(newlocations)}, newlocations}
   end
-  defp update(lid, 0, locations) when map_size(locations) == 0,
+  defp update(lid, 0, locations) when map_size(locations) == 0 do
     {:nochange, locations}
   end
-  defp update(lid, qty, locations) when map_size(locations) == 0,
+  defp update(lid, qty, locations) when map_size(locations) == 0 do
     {{:instock, lid}, Map.put(locations, lid, qty)} 
   end
-  defp update(lid, qty, locations),
+  defp update(lid, qty, locations) do
     newlocations = Map.put(locations, lid, qty)
     {{:change, Map.keys(newlocations)}, newlocations} 
   end

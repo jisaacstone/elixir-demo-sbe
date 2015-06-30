@@ -3,6 +3,10 @@ defmodule SBEFeed do
 
   @buffer_size 100
 
+  def start_link(options \\ []) do
+    GenEvent.start_link(options)
+  end
+
   def init(_) do
     {:ok, %{}}
   end
@@ -32,7 +36,7 @@ defmodule SBEFeed do
   defp send_events(states) do
     for state <- states do
       Poison.encode!(state) |> IO.puts
-    en
+    end
   end
 
 end
