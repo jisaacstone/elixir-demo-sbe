@@ -1,5 +1,6 @@
 defmodule Flags do
   use GenEvent
+  @behavior Change
 
   def start_link(options \\ []) do
     GenEvent.start_link(options)

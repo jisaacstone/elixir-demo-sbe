@@ -11,6 +11,7 @@ defmodule Main do
     GenServer.start_link(__MODULE__, listeners, opts)
   end
 
+  @spec qty_at_location(GerServer.server, String.t, non_neg_integer, String.t) :: term
   def qty_at_location(server, sku, qty, location) do
     GenServer.call(server, {:qty_at_location, sku, qty, location})
   end
@@ -61,8 +62,9 @@ defmodule Main do
     %{state | refs: refs}
   end
 
+  @spec notify(Change.t, [GenServer.server]) :: term
   defp notify(:nochange, _listeners) do
-    # nothing
+    :nil
   end
   defp notify(change, listeners) do
     for listener <- listeners do

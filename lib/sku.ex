@@ -7,13 +7,7 @@ defmodule Sku do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  @doc """
-  Returns one of
-   :nochange
-   :outofstock
-   {:change, [location_ids]}
-   {:instock, location_id}
-  """
+  @spec update_qty(GerServer.server, String.t, non_neg_integer) :: term
   def update_qty(server, location_id, qty) do
     GenServer.call(server, {:update, location_id, qty})
   end
@@ -29,7 +23,8 @@ defmodule Sku do
     {:reply, action, newlocations}
   end
 
-  defp initial_state do
+  @spec initial_state() :: Dict.t
+  defp initial_state() do
     # Stub
     %{"a_location_id" => 5}
   end
