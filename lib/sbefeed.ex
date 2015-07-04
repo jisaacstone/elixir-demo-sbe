@@ -1,6 +1,6 @@
 defmodule SBEFeed do
   use GenEvent
-  @behavior Change
+  @behaviour Change
   @buffer_size 100
 
   def start_link(options \\ []) do

@@ -1,6 +1,5 @@
 defmodule Main do
   use GenServer
-
   import Supervisor.Spec
 
   @table :skus
@@ -28,13 +27,16 @@ defmodule Main do
   end
 
   def handle_cast({:qty_at_location, sku, qty, location}, state) do
-    case :ets.lookup(@table, sku) do
+    change = case :ets.lookup(@table, sku) do
       [{^sku, pid}] ->
-        notify(Sku.update(pid, location, qty), state.listeners)
-        {:noreply, state}
+        Sku.update(pid, location, qty)
       [] ->
-        {:noreply, init_sku(sku, state)}
+        {:ok, pid} = Supervisor.start_child(state.sku_super)
+        :ets.insert(state.skus, {sku, pid})
+        {:instock, Sku.get_locations(pid)}
     end
+    notify(change, state.listeners)
+    state
   end
 
   def handle_cast({:delete, sku}, state) do
@@ -47,19 +49,6 @@ defmodule Main do
       [] ->
         {:noreply, state}
     end
-  end
-
-  def get_state(sku) do
-    %{"#{sku}_location_1" => 5}
-  end
-
-  defp init_sku(sku, state) do
-    {:ok, pid} = Supervisor.start_child(
-      state.sku_super,
-      start_fun: {Sku, get_state, [sku]})
-    refs = HashDict.put(state.refs, Process.monitor(pid), sku)
-    :ets.insert(state.skus, {sku, pid})
-    %{state | refs: refs}
   end
 
   @spec notify(Change.t, [GenServer.server]) :: term

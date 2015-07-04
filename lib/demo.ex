@@ -24,7 +24,7 @@ defmodule Demo.Supervisor do
     listeners = [
       worker(SBEFeed, [[name: @sbefeed_name]]),
       worker(Flags, [[name: @flags_name]])]
-    main = worker(Main, [@sbefeed_name, @flags_name, [name: main] ])
+    main = worker(Main, [@sbefeed_name, @flags_name, [name: Main] ])
 
     supervise(listeners ++ [main], strategy: :one_for_one)
   end

@@ -7,9 +7,27 @@ defmodule Sku do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  @spec update_qty(GerServer.server, String.t, non_neg_integer) :: term
-  def update_qty(server, location_id, qty) do
-    GenServer.call(server, {:update, location_id, qty})
+  @doc """
+  Mark sku availabile at a location
+  """
+  @spec add_location(GerServer.server, String.t) :: Change.t
+  def add_location(server, location_id) do
+    GenServer.call(server, {:add, location_id})
+  end
+
+  @doc """
+  Mark sku unavailabile at a location
+  """
+  @spec remove_location(GerServer.server, String.t) :: Change.t
+  def remove_location(server, location_id) do
+    GenServer.call(server, {:remove, location_id})
+  end
+
+  @doc """
+  Get current available locations
+  """
+  def get_locations(server) do
+    GenServer.call(server, :get_locations)
   end
 
   ## SERVER API ##
@@ -18,42 +36,46 @@ defmodule Sku do
     {:ok, initial_state}
   end
 
-  def handle_call({:update, lid, qty}, _from, locations) do
-    {action, newlocations} = update(lid, qty, locations)
-    {:reply, action, newlocations}
+  def handle_call(action, _from, locations) do
+    {change, newlocations} = determine_change(action, locations)
+    {:reply, change, newlocations}
   end
 
-  @spec initial_state() :: Dict.t
+  def handle_call(:get_locations, locations) do
+    {:reply, locations, locations}
+  end
+
   defp initial_state() do
-    # Stub
-    %{"a_location_id" => 5}
+    # Except not because it is a stub
+    ["some_location_id"]
   end
 
-  @doc """
-  Determing the change (if any) to the sku's availability state
+  defp determine_change({:remove, _lid}, []) do
+    {:nochange, []}
+  end
+  defp determine_change({:remove, lid}, [lid]) do
+    {:outofstock, []}
+  end
+  defp determine_change({:remove, lid}, [lid | tail]) do
+    {:change, tail}
+  end
+  defp determine_change({:remove, lid}, [head | tail]) do
+    case determine_change({:remove, lid}, tail) do
+      {:outofstock, newtail} ->
+        {:change, [head | newtail]}
+      {change_or_nochange, newtail} ->
+        {change_or_nochange, [head | newtail]}
+    end
+  end
 
-  Returns a tuple of `{change, state}`
-  `change` can be either the atom `:nochange` or a tuple
-  `{change_type, location_ids}`
-  """
-  defp update(lid, qty, locations = %{lid => qty}) do
-    {:nochange, locations}
+  defp determine_change({:add, lid}, []) do
+    {:instock, [lid]}
   end
-  defp update(lid, 0, locations = %{lid => _qty}) when map_size(locations) == 1 do
-    {:outofstock, %{}}
-  end
-  defp update(lid, 0, locations = %{lid => qty}) do
-    newlocations = Map.delete(locations, lid)
-    {{:change, Map.keys(newlocations)}, newlocations}
-  end
-  defp update(lid, 0, locations) when map_size(locations) == 0 do
-    {:nochange, locations}
-  end
-  defp update(lid, qty, locations) when map_size(locations) == 0 do
-    {{:instock, lid}, Map.put(locations, lid, qty)} 
-  end
-  defp update(lid, qty, locations) do
-    newlocations = Map.put(locations, lid, qty)
-    {{:change, Map.keys(newlocations)}, newlocations} 
+  defp determine_change({:add, lid}, locations) do
+    if Enum.member?(locations, lid) do
+      {:nochange, locations}
+    else
+      {:change, [lid | locations]}
+    end
   end
 end
