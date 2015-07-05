@@ -3,23 +3,23 @@ defmodule Sku do
   
   ## CLIENT API ##
 
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, :ok, opts)
+  def start_link(location_id, opts \\ []) do
+    GenServer.start_link(__MODULE__, [location_id], opts)
   end
 
   @doc """
   Mark sku availabile at a location
   """
-  @spec add_location(GerServer.server, String.t) :: Change.t
-  def add_location(server, location_id) do
+  @spec in_stock_at(GerServer.server, String.t) :: Change.t
+  def in_stock_at(server, location_id) do
     GenServer.call(server, {:add, location_id})
   end
 
   @doc """
   Mark sku unavailabile at a location
   """
-  @spec remove_location(GerServer.server, String.t) :: Change.t
-  def remove_location(server, location_id) do
+  @spec out_of_stock_at(GerServer.server, String.t) :: Change.t
+  def out_of_stock_at(server, location_id) do
     GenServer.call(server, {:remove, location_id})
   end
 
@@ -32,22 +32,21 @@ defmodule Sku do
 
   ## SERVER API ##
 
-  def init() do
-    {:ok, initial_state}
+  def init(location_ids) do
+    {:ok, initial_state(location_ids)}
   end
 
-  def handle_call(action, _from, locations) do
-    {change, newlocations} = determine_change(action, locations)
-    {:reply, change, newlocations}
-  end
-
-  def handle_call(:get_locations, locations) do
+  def handle_call(:get_locations, _from, locations) do
     {:reply, locations, locations}
   end
+  def handle_call(action, _from, locations) do
+    {change, newlocations} = determine_change(action, locations)
+    {:reply, {change, newlocations}, newlocations}
+  end
 
-  defp initial_state() do
+  defp initial_state(location_ids) do
     # Except not because it is a stub
-    ["some_location_id"]
+    location_ids
   end
 
   defp determine_change({:remove, _lid}, []) do

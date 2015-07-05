@@ -2,18 +2,14 @@ defmodule Flags do
   use GenEvent
   @behaviour Change
 
-  def start_link(options \\ []) do
-    GenEvent.start_link(options)
+  def handle_event({{:outofstock, []}, sku}, _) do
+    {setflag(sku, false), :_}
   end
-
-  def handle_event({:outofstock, sku}, _) do
-    setflag(sku, false)
-  end
-  def handle_event({{:instock, _}, sku}, _) do
-    setflag(sku, true)
+  def handle_event({{:instock, _locations}, sku}, _) do
+    {setflag(sku, true), :_}
   end
   def handle_event(_, _) do
-    # ignore
+    {:ok, :_}
   end
 
   defp setflag(sku, status) do

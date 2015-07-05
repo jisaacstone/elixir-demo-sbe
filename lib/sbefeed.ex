@@ -1,41 +1,28 @@
 defmodule SBEFeed do
   use GenEvent
   @behaviour Change
-  @buffer_size 100
+  @buffer_size 5
 
-  def start_link(options \\ []) do
-    GenEvent.start_link(options)
-  end
-
-  def init(_) do
+  def init(_args) do
+    IO.puts("SBEFeed starting")
     {:ok, %{}}
   end
 
-  def handle_event({state, sku}, states) when map_size(states) >= @buffer_size do
-    send_events(Map.put(states, sku, normalize(state)))
+  def handle_event({{_event, locations}, sku}, states) when map_size(states) >= @buffer_size do
+    send_events(Map.put(states, sku, locations))
     {:ok, %{}}
   end
-  def handle_event({state, sku}, states) do
-    {:ok, Map.put(states, sku, normalize(state))}
+  def handle_event({{_event, locations}, sku}, states) do
+    {:ok, Map.put(states, sku, locations)}
   end
   def handle_event(:flush, states) do
     send_events(states)
     {:ok, %{}}
   end
 
-  defp normalize(:outofstock) do
-    []
-  end
-  defp normalize(:instock, lid) do
-    [lid]
-  end
-  defp normalize(:change, lid_list) do
-    lid_list
-  end
-
   defp send_events(states) do
     for state <- states do
-      Poison.encode!(state) |> IO.puts
+      IO.inspect state
     end
   end
 
