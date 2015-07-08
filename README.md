@@ -7,7 +7,7 @@ Demo
 ### Terms ###
 
 | Term        | Meaning                                         | Kind of Like |
-+-------------+-------------------------------------------------+--------------+
+|-------------|-------------------------------------------------|--------------|
 | BEAM        | Erlang / Elixir virtual machine                 | JVM          |
 | OTP         | Standard libraries and practices                | J2EE         |
 | Concurrency | Processes operating independently of each other | isolation    |
